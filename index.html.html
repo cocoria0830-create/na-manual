@@ -660,7 +660,7 @@ async function callGemini(name, birth, time) {
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
@@ -716,17 +716,21 @@ function goTab(idx) {
 }
 
 // 터치 스와이프
-let touchStartX = 0;
-document.getElementById('swipe-container').addEventListener('touchstart', e => {
-  touchStartX = e.touches[0].clientX;
-}, {passive:true});
-document.getElementById('swipe-container').addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - touchStartX;
-  if (Math.abs(dx) > 50) {
-    if (dx < 0 && currentTab < 2) goTab(currentTab + 1);
-    if (dx > 0 && currentTab > 0) goTab(currentTab - 1);
-  }
-}, {passive:true});
+document.addEventListener('DOMContentLoaded', () => {
+  const swipeContainer = document.getElementById('swipe-container');
+  if (!swipeContainer) return;
+  let touchStartX = 0;
+  swipeContainer.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+  }, {passive:true});
+  swipeContainer.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0 && currentTab < 2) goTab(currentTab + 1);
+      if (dx > 0 && currentTab > 0) goTab(currentTab - 1);
+    }
+  }, {passive:true});
+});
 
 // ── shake 키프레임 ──
 document.head.insertAdjacentHTML('beforeend','<style>@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}</style>');
