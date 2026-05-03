@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>나 사용설명서</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  @font-face { font-family: 'PfStardust30'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2506-1@1.0/PFStardust.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+  @font-face { font-family: 'PfStardust30'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2506-1@1.0/PFStardustBold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --black: #000000;
+    --purple: #4B0082;
+    --purple-light: #6A0DAD;
+    --gold: #FFD700;
+    --gold-dim: #B8960C;
+    --white: #FFFFFF;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--black);
+    overflow: hidden;
+    font-family: 'PfStardust30', 'Share Tech Mono', monospace;
+  }
+
+  /* ───────────── 화면 전환 ───────────── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.6s ease;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; }
+
+  /* ───────────── 별 파티클 ───────────── */
+  .star {
+    position: absolute; border-radius: 50%; background: white;
+    animation: twinkle var(--dur, 3s) ease-in-out infinite; opacity: 0;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; } 50% { opacity: var(--bright, 0.4); }
+  }
+
+  /* ───────────── 인트로 화면 ───────────── */
+  #screen-intro { overflow: hidden; }
+
+  #snake-wrap {
+    width: 160px; height: 160px; position: relative;
+    margin-bottom: 48px; cursor: pointer;
+  }
+  #snake-wrap:active #snake-svg { filter: drop-shadow(0 0 12px rgba(255,215,0,0.7)); }
+  #snake-svg {
+    width: 100%; height: 100%;
+    animation: snake-spin 8s linear infinite; transform-origin: center;
+  }
+  @keyframes snake-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .snake-body {
+    stroke-dasharray: 800; stroke-dashoffset: 800;
+    animation: draw-snake 2.5s ease forwards;
+    animation-delay: var(--delay, 0s);
+  }
+  @keyframes draw-snake { to { stroke-dashoffset: 0; } }
+
+  #center-eye {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px; height: 56px; opacity: 0;
+    animation: eye-appear 0.6s ease forwards 3s;
+  }
+  @keyframes eye-appear { to { opacity: 1; } }
+  #center-eye svg { width: 100%; height: 100%; }
+  .moon-orbit {
+    transform-origin: 28px 28px;
+    animation: moon-orbit 6s linear infinite;
+  }
+  @keyframes moon-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .sun-core-anim {
+    animation: core-pulse 3s ease-in-out infinite; transform-origin: 28px 28px;
+  }
+  @keyframes core-pulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.12); }
+  }
+
+  #main-text {
+    text-align: center; user-select: none;
+    padding: 12px 20px; min-height: 36px;
+    transition: opacity 0.4s ease;
+  }
+  #main-text.hidden { opacity: 0; pointer-events: none; }
+  #main-text p {
+    color: var(--white); font-size: 18px;
+    line-height: 1.6; letter-spacing: 1px;
+  }
+  .cursor-blink {
+    display: inline-block; animation: blink 1s step-end infinite;
+    color: var(--gold); margin-left: 1px;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  #touch-hint {
+    position: relative;
+    margin-top: 32px;
+    display: flex; justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+  }
+  #touch-hint span {
+    font-size: 18px; color: rgba(255,215,0,0.6);
+    letter-spacing: 4px;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 700;
+    border: 2px solid rgba(255,215,0,0.6);
+    padding: 8px 20px; border-radius: 2px;
+  }
+  @keyframes text-appear { to { opacity: 1; } }
+
+  #ripple {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 1px solid rgba(255,215,0,0.8);
+    pointer-events: none; z-index: 100;
+  }
+  #ripple.active { animation: ripple-out 0.8s ease forwards; }
+  @keyframes ripple-out { to { transform: translate(-50%, -50%) scale(60); opacity: 0; } }
+
+  /* 로고 클릭 시 나 사용설명서 플래시 오버레이 */
+  #title-flash {
+    position: fixed; inset: 0;
+    background: #000;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  #title-flash.show { opacity: 1; pointer-events: all; }
+  #title-flash-text {
+    font-family: 'PfStardust30', monospace;
+    font-size: 32px; color: var(--gold);
+    letter-spacing: 6px; text-align: center;
+    line-height: 1.6;
+    opacity: 0; transform: scale(0.95);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  #title-flash.show #title-flash-text { opacity: 1; transform: scale(1); }
+  #input-panel {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, #0a0010 0%, #0a001088 80%, transparent 100%);
+    padding: 32px 24px 40px;
+    transform: translateY(100%);
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 10;
+  }
+  #input-panel.open { transform: translateY(0); }
+
+  .input-group { margin-bottom: 20px; }
+  .input-label {
+    display: block; font-size: 13px;
+    font-family: 'PfStardust30', monospace;
+    color: rgba(255,255,255,0.4); letter-spacing: 2px; margin-bottom: 8px;
+  }
+  .input-field {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 0.5px solid rgba(255,215,0,0.3); border-radius: 4px;
+    padding: 14px 16px; color: var(--white); font-size: 16px;
+    font-family: 'PfStardust30', monospace;
+    outline: none; transition: border-color 0.3s, background 0.3s;
+    -webkit-appearance: none;
+  }
+  .input-field:focus { border-color: var(--gold); background: rgba(255,215,0,0.05); }
+  .input-field::placeholder { color: rgba(255,255,255,0.2); font-size: 14px; }
+
+  .time-row { display: flex; align-items: center; gap: 12px; }
+  .time-row .input-field { flex: 1; transition: opacity 0.3s; }
+  .time-row .input-field.disabled { opacity: 0.3; pointer-events: none; }
+
+  .checkbox-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; cursor: pointer; }
+  .checkbox-wrap input[type="checkbox"] {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px;
+    border: 0.5px solid rgba(255,215,0,0.5); border-radius: 3px;
+    background: transparent; cursor: pointer; position: relative; flex-shrink: 0;
+  }
+  .checkbox-wrap input[type="checkbox"]:checked { background: var(--gold); border-color: var(--gold); }
+  .checkbox-wrap input[type="checkbox"]:checked::after {
+    content: ''; position: absolute; top: 2px; left: 5px;
+    width: 5px; height: 9px; border: 2px solid #000;
+    border-top: none; border-left: none; transform: rotate(45deg);
+  }
+  .checkbox-label { font-family: 'PfStardust30', monospace; font-size: 13px; color: rgba(255,255,255,0.4); letter-spacing: 1px; white-space: nowrap; }
+
+  #start-btn {
+    width: 100%; margin-top: 28px; background: transparent;
+    border: 0.5px solid var(--gold); border-radius: 4px; padding: 16px;
+    color: var(--gold); font-family: 'PfStardust30', monospace;
+    font-size: 16px; letter-spacing: 4px; cursor: pointer;
+    position: relative; overflow: hidden; transition: background 0.3s;
+  }
+  #start-btn::before {
+    content: ''; position: absolute; top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.1), transparent);
+    animation: shimmer 2s ease infinite;
+  }
+  @keyframes shimmer { to { left: 100%; } }
+  #start-btn:active { background: rgba(255,215,0,0.1); }
+
+  /* ───────────── 로딩 화면 ───────────── */
+  #screen-loading {
+    background: #000; flex-direction: column; gap: 32px;
+  }
+  .loading-symbol {
+    width: 80px; height: 80px;
+    animation: loading-spin 3s linear infinite;
+  }
+  @keyframes loading-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .loading-text {
+    font-size: 13px; color: rgba(255,215,0,0.7);
+    letter-spacing: 4px; text-align: center;
+    animation: loading-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes loading-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .loading-log {
+    font-size: 11px; color: rgba(255,255,255,0.25);
+    letter-spacing: 1px; text-align: center;
+    min-height: 18px; transition: opacity 0.3s;
+  }
+
+  /* ───────────── 결과 화면 ───────────── */
+  #screen-result {
+    background: #000; justify-content: flex-start;
+    padding-top: 0; overflow: hidden;
+  }
+
+  /* 결과 상단 헤더 */
+  .result-header {
+    width: 100%; padding: 52px 24px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    flex-shrink: 0;
+  }
+  .result-name {
+    font-size: 20px; color: var(--gold); letter-spacing: 3px;
+  }
+  .result-info {
+    font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 2px;
+  }
+
+  /* 탭 */
+  .result-tabs {
+    display: flex; width: 100%; padding: 0 24px;
+    gap: 0; flex-shrink: 0; margin-bottom: 4px;
+  }
+  .rtab {
+    flex: 1; padding: 12px 0; text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    color: rgba(255,255,255,0.25); background: transparent;
+    border: none; border-bottom: 1px solid rgba(255,215,0,0.15);
+    cursor: pointer; transition: all 0.3s;
+  }
+  .rtab.active {
+    color: var(--gold);
+    border-bottom: 1px solid var(--gold);
+  }
+
+  /* 스와이프 카드 컨테이너 */
+  .swipe-container {
+    flex: 1; width: 100%; overflow: hidden;
+    position: relative;
+  }
+  .cards-track {
+    display: flex; height: 100%;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+  .result-card {
+    min-width: 100%; height: 100%;
+    padding: 24px 24px 40px;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  /* 카드 섹션 블록 */
+  .card-block {
+    border: 0.5px solid rgba(255,215,0,0.15);
+    border-radius: 8px; padding: 20px;
+    background: rgba(255,255,255,0.02);
+  }
+  .card-block.bright { border-color: rgba(255,215,0,0.25); }
+  .card-block.shadow { border-color: rgba(155,48,255,0.3); background: rgba(75,0,130,0.08); }
+  .card-block.rx     { border-color: rgba(255,100,100,0.25); background: rgba(80,0,0,0.1); }
+
+  .block-tag {
+    font-size: 9px; letter-spacing: 3px;
+    color: rgba(255,215,0,0.5); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .block-tag::after {
+    content: ''; flex: 1; height: 0.5px;
+    background: rgba(255,215,0,0.2);
+  }
+  .card-block.shadow .block-tag { color: rgba(155,48,255,0.7); }
+  .card-block.shadow .block-tag::after { background: rgba(155,48,255,0.2); }
+  .card-block.rx .block-tag { color: rgba(255,120,120,0.7); }
+  .card-block.rx .block-tag::after { background: rgba(255,100,100,0.2); }
+
+  .block-title {
+    font-size: 15px; color: var(--white);
+    margin-bottom: 10px; letter-spacing: 1px; line-height: 1.5;
+  }
+  .block-body {
+    font-size: 13px; color: rgba(255,255,255,0.65);
+    line-height: 1.9; letter-spacing: 0.5px;
+    font-family: 'Nanum Gothic Coding', monospace;
+  }
+  .block-body strong { color: var(--gold); font-weight: 700; }
+  .card-block.shadow .block-body strong { color: #b57aff; }
+  .card-block.rx .block-body strong { color: #ff9966; }
+
+  /* 스와이프 인디케이터 */
+  .swipe-dots {
+    position: absolute; bottom: 12px; left: 0; right: 0;
+    display: flex; justify-content: center; gap: 6px;
+    pointer-events: none;
+  }
+  .dot {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: rgba(255,215,0,0.2); transition: background 0.3s;
+  }
+  .dot.active { background: var(--gold); }
+
+  /* 잠금 카드 */
+  .lock-card {
+    border: 0.5px solid rgba(255,215,0,0.2);
+    border-radius: 8px; padding: 32px 20px;
+    text-align: center; background: rgba(255,255,255,0.02);
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .lock-icon { font-size: 28px; opacity: 0.4; }
+  .lock-text { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.8; }
+  .lock-btn {
+    margin-top: 8px; padding: 12px 28px;
+    background: transparent; border: 0.5px solid var(--gold);
+    color: var(--gold); font-family: 'Share Tech Mono', monospace;
+    font-size: 12px; letter-spacing: 3px; border-radius: 4px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- 종소리 리플 -->
+<div id="ripple"></div>
+
+<!-- ══════════════ 인트로 화면 ══════════════ -->
+<div class="screen" id="screen-intro">
+  <div id="stars"></div>
+
+  <div id="snake-wrap" onclick="activateInput()">
+    <svg id="snake-svg" viewBox="0 0 160 160" fill="none">
+      <path class="snake-body" style="--delay:0.3s"
+        d="M80 20 C115 20,140 45,140 80 C140 115,115 140,80 140 C45 140,20 115,20 80
+           C20 55,38 35,58 28 C68 24,75 30,76 38 C77 48,68 54,80 54
+           C100 54,115 68,115 80 C115 98,98 108,80 108
+           C62 108,50 96,50 80 C50 66,62 58,74 58"
+        stroke="#FFD700" stroke-width="2.5" stroke-linecap="round"/>
+      <g opacity="0" style="animation: eye-appear 0.4s ease forwards 2s">
+        <polygon points="76,14 80,8 84,14" fill="#FFD700"/>
+        <circle cx="78" cy="12" r="1.2" fill="#000"/>
+        <circle cx="82" cy="12" r="1.2" fill="#000"/>
+      </g>
+      <path class="snake-body" style="--delay:0.8s"
+        d="M80 20 C45 20,20 45,20 80 C20 115,45 140,80 140 C115 140,140 115,140 80
+           C140 55,122 35,102 28 C92 24,85 30,84 38 C83 48,92 54,80 54
+           C60 54,45 68,45 80 C45 98,62 108,80 108
+           C98 108,110 96,110 80 C110 66,98 58,86 58"
+        stroke="#9B30FF" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+      <g opacity="0" style="animation: eye-appear 0.4s ease forwards 2.4s">
+        <polygon points="76,146 80,153 84,146" fill="#9B30FF"/>
+        <circle cx="78" cy="148" r="1.2" fill="#000"/>
+        <circle cx="82" cy="148" r="1.2" fill="#000"/>
+      </g>
+      <circle cx="80" cy="80" r="75" stroke="rgba(255,215,0,0.08)" stroke-width="0.5"/>
+      <circle cx="80" cy="80" r="65" stroke="rgba(155,48,255,0.08)" stroke-width="0.5"/>
+    </svg>
+    <div id="center-eye">
+      <svg viewBox="0 0 56 56" fill="none">
+        <defs><clipPath id="sunClip"><circle cx="28" cy="28" r="13"/></clipPath></defs>
+        <g class="sun-core-anim"><circle cx="28" cy="28" r="13" fill="#FFD700"/></g>
+        <g class="moon-orbit" clip-path="url(#sunClip)">
+          <circle cx="28" cy="28" r="13" fill="#FFD700"/>
+          <circle cx="28" cy="19" r="11" fill="#000"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div id="main-text"><p id="main-p"></p></div>
+  <p id="touch-hint"><span>로고 클릭</span></p>
+
+  <!-- 나 사용설명서 플래시 -->
+  <div id="title-flash">
+    <div id="title-flash-text">나 사용설명서</div>
+  </div>
+
+  <div id="input-panel">
+    <div class="input-group">
+      <label class="input-label">[ 이름 ]</label>
+      <input class="input-field" type="text" placeholder="" id="name-input" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label class="input-label">[ 생년월일 ]</label>
+      <input class="input-field" type="date" id="birth-input">
+    </div>
+    <div class="input-group">
+      <label class="input-label">[ 태어난 시간 ]</label>
+      <div class="time-row">
+        <input class="input-field" type="time" id="time-input">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="no-time" onchange="toggleTime(this)">
+          <span class="checkbox-label">모름</span>
+        </label>
+      </div>
+    </div>
+    <button id="start-btn" onclick="startAnalysis()">운명을 열어봐 →</button>
+  </div>
+</div>
+
+<!-- ══════════════ 로딩 화면 ══════════════ -->
+<div class="screen hidden" id="screen-loading">
+  <svg class="loading-symbol" viewBox="0 0 80 80" fill="none">
+    <defs><clipPath id="lClip"><circle cx="40" cy="40" r="18"/></clipPath></defs>
+    <circle cx="40" cy="40" r="36" stroke="#FFD700" stroke-width="0.5" opacity="0.3"/>
+    <circle cx="40" cy="40" r="26" stroke="#9B30FF" stroke-width="0.5" opacity="0.3"/>
+    <g><circle cx="40" cy="40" r="18" fill="#FFD700" opacity="0.9"/>
+    <circle cx="40" cy="27" r="16" fill="#000" clip-path="url(#lClip)"/></g>
+  </svg>
+  <div class="loading-text" id="loading-text">// 명식 산출 중...</div>
+  <div class="loading-log" id="loading-log"></div>
+</div>
+
+<!-- ══════════════ 결과 화면 ══════════════ -->
+<div class="screen hidden" id="screen-result">
+  <div class="result-header">
+    <div class="result-name" id="result-name">—</div>
+    <div class="result-info" id="result-info">—</div>
+  </div>
+
+  <div class="result-tabs">
+    <button class="rtab active" onclick="goTab(0)">BRIGHT</button>
+    <button class="rtab" onclick="goTab(1)">SHADOW</button>
+    <button class="rtab" onclick="goTab(2)">처방전</button>
+  </div>
+
+  <div class="swipe-container" id="swipe-container">
+    <div class="cards-track" id="cards-track">
+
+      <!-- 카드 0: BRIGHT SIDE -->
+      <div class="result-card" id="card-bright">
+        <div class="card-block bright">
+          <div class="block-tag">사주 · 기본 성질</div>
+          <div class="block-title" id="bright-saju-title">—</div>
+          <div class="block-body" id="bright-saju-body">분석 중...</div>
+        </div>
+        <div class="card-block bright">
+          <div class="block-tag">자미두수 · 사회적 역할</div>
+          <div class="block-title" id="bright-jami-title">—</div>
+          <div class="block-body" id="bright-jami-body">분석 중...</div>
+        </div>
+        <div class="card-block bright">
+          <div class="block-tag">별자리 · 외면</div>
+          <div class="block-title" id="bright-star-title">—</div>
+          <div class="block-body" id="bright-star-body">분석 중...</div>
+        </div>
+      </div>
+
+      <!-- 카드 1: SHADOW SIDE -->
+      <div class="result-card" id="card-shadow">
+        <div class="card-block shadow">
+          <div class="block-tag">숙요점 · 내면의 욕망</div>
+          <div class="block-title" id="shadow-title">—</div>
+          <div class="block-body" id="shadow-body">분석 중...</div>
+        </div>
+        <div class="card-block shadow">
+          <div class="block-tag">단점 · 주의점</div>
+          <div class="block-title" id="shadow-warn-title">—</div>
+          <div class="block-body" id="shadow-warn-body">분석 중...</div>
+        </div>
+      </div>
+
+      <!-- 카드 2: 처방전 -->
+      <div class="result-card" id="card-rx">
+        <div class="card-block rx">
+          <div class="block-tag">MZ 처방전</div>
+          <div class="block-title" id="rx-title">—</div>
+          <div class="block-body" id="rx-body">분석 중...</div>
+        </div>
+        <div class="lock-card">
+          <div class="lock-icon">🔮</div>
+          <div class="lock-text">재물운 · 연애운 상세 분석은<br>복채를 내야 열려.</div>
+          <button class="lock-btn">복채 내기</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="swipe-dots" id="swipe-dots">
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GEMINI_API_KEY = 'AIzaSyBzU1sBLZOFhJ1c9xMRAD_ilSgrrpzsW8g';
+
+let audioCtx = null;
+let currentTab = 0;
+
+// ── 별 생성 ──
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--dur:${2+Math.random()*4}s;--bright:${0.2+Math.random()*0.6};animation-delay:${Math.random()*4}s;`;
+    container.appendChild(s);
+  }
+}
+
+// ── 종소리 ──
+function createBellSound() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const now = audioCtx.currentTime;
+  const partials = [
+    {freq:220,gain:0.18,decay:6},{freq:440,gain:0.12,decay:5},
+    {freq:528,gain:0.09,decay:4.5},{freq:660,gain:0.06,decay:3.5},{freq:880,gain:0.04,decay:2.5}
+  ];
+  partials.forEach(({freq,gain,decay}) => {
+    const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    osc.type='sine'; osc.frequency.value=freq;
+    g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(gain,now+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001,now+decay);
+    osc.start(now); osc.stop(now+decay);
+  });
+}
+
+// ── 타이핑 효과 ──
+function typeText(targetId, text, startDelay, charDelay) {
+  const el = document.getElementById(targetId);
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor-blink'; cursor.textContent = '_';
+  setTimeout(() => {
+    el.appendChild(cursor);
+    const iv = setInterval(() => {
+      if (i < text.length) { cursor.insertAdjacentText('beforebegin', text[i]); i++; }
+      else clearInterval(iv);
+    }, charDelay);
+  }, startDelay);
+}
+
+// ── 화면 전환 ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ── 인트로 유틸 ──
+
+function toggleTime(cb) {
+  const t = document.getElementById('time-input');
+  t.classList.toggle('disabled', cb.checked);
+  if (cb.checked) t.value = '';
+}
+
+function shakeField(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = 'rgba(255,80,80,0.8)';
+  el.style.animation = 'shake 0.3s ease';
+  setTimeout(() => { el.style.borderColor='rgba(255,215,0,0.3)'; el.style.animation=''; }, 600);
+}
+
+// ── 분석 시작 ──
+function startAnalysis() {
+  const name = document.getElementById('name-input').value.trim();
+  const birth = document.getElementById('birth-input').value;
+  if (!name || !birth) {
+    if (!name) shakeField('name-input');
+    if (!birth) shakeField('birth-input');
+    return;
+  }
+  const timeVal = document.getElementById('no-time').checked ? '모름' : (document.getElementById('time-input').value || '모름');
+  showScreen('screen-loading');
+  callGemini(name, birth, timeVal);
+}
+
+// ── 로딩 메시지 순환 ──
+const loadingMsgs = [
+  '// 명식 산출 중...',
+  '// 사주 팔자 분석 중...',
+  '// 자미두수 명궁 탐색 중...',
+  '// 숙요점 조회 중...',
+  '// 별자리 대조 중...',
+  '// 보고서 작성 중...',
+];
+let loadingIdx = 0, loadingTimer = null;
+function startLoadingAnim() {
+  loadingIdx = 0;
+  document.getElementById('loading-text').textContent = loadingMsgs[0];
+  loadingTimer = setInterval(() => {
+    loadingIdx = (loadingIdx + 1) % loadingMsgs.length;
+    document.getElementById('loading-text').textContent = loadingMsgs[loadingIdx];
+  }, 1400);
+}
+function stopLoadingAnim() { clearInterval(loadingTimer); }
+
+// ── 제미나이 API 호출 ──
+async function callGemini(name, birth, time) {
+  startLoadingAnim();
+  const birthDate = new Date(birth);
+  const year = birthDate.getFullYear();
+  const month = birthDate.getMonth() + 1;
+  const day = birthDate.getDate();
+
+  const prompt = `
+당신은 10년 경력의 사주명리, 자미두수, 숙요점, 서양 점성술 전문가입니다.
+아래 사람의 정보를 바탕으로 분석 보고서를 작성하세요.
+
+이름: ${name}
+생년월일: ${year}년 ${month}월 ${day}일
+태어난 시간: ${time}
+
+다음 JSON 형식으로만 응답하세요. 다른 텍스트는 절대 포함하지 마세요.
+말투는 반말로, MZ세대 도사 스타일로 ("왔어?", "너 이럴 거 같은데" 등). 뼈 때리는 직설적 표현 사용.
+
+{
+  "bright_saju_title": "사주 강점 한 줄 제목",
+  "bright_saju_body": "사주 기반 강점 및 기본 성질 분석 (150자 내외, <strong>강조어</strong> 포함)",
+  "bright_jami_title": "자미두수 사회적 역할 한 줄 제목",
+  "bright_jami_body": "자미두수 기반 사회적 역할과 명예 분석 (150자 내외, <strong>강조어</strong> 포함)",
+  "bright_star_title": "별자리 외면 한 줄 제목",
+  "bright_star_body": "별자리 기반 외면과 인상 분석 (100자 내외, <strong>강조어</strong> 포함)",
+  "shadow_title": "내면의 욕망 한 줄 제목",
+  "shadow_body": "숙요점 기반 숨겨진 욕망과 내면 분석 (150자 내외, <strong>강조어</strong> 포함)",
+  "shadow_warn_title": "주의해야 할 단점 한 줄 제목",
+  "shadow_warn_body": "단점과 주의점 직설 분석 (150자 내외, <strong>강조어</strong> 포함)",
+  "rx_title": "처방전 제목",
+  "rx_body": "지금 당장 해야 할 것, 피해야 할 것 처방 (200자 내외, <strong>강조어</strong> 포함)"
+}
+`;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents: [{parts: [{text: prompt}]}],
+          generationConfig: {temperature: 0.8, maxOutputTokens: 1200}
+        })
+      }
+    );
+
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const jsonStr = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(jsonStr);
+    stopLoadingAnim();
+    showResult(document.getElementById('name-input').value.trim(), document.getElementById('birth-input').value, result);
+  } catch (e) {
+    stopLoadingAnim();
+    document.getElementById('loading-text').textContent = '// 오류 발생. 다시 시도해줘.';
+    setTimeout(() => showScreen('screen-intro'), 2500);
+  }
+}
+
+// ── 결과 화면 표시 ──
+function showResult(name, birth, r) {
+  const birthDate = new Date(birth);
+  document.getElementById('result-name').textContent = name;
+  document.getElementById('result-info').textContent =
+    `${birthDate.getFullYear()}.${String(birthDate.getMonth()+1).padStart(2,'0')}.${String(birthDate.getDate()).padStart(2,'0')}`;
+
+  document.getElementById('bright-saju-title').textContent = r.bright_saju_title;
+  document.getElementById('bright-saju-body').innerHTML = r.bright_saju_body;
+  document.getElementById('bright-jami-title').textContent = r.bright_jami_title;
+  document.getElementById('bright-jami-body').innerHTML = r.bright_jami_body;
+  document.getElementById('bright-star-title').textContent = r.bright_star_title;
+  document.getElementById('bright-star-body').innerHTML = r.bright_star_body;
+  document.getElementById('shadow-title').textContent = r.shadow_title;
+  document.getElementById('shadow-body').innerHTML = r.shadow_body;
+  document.getElementById('shadow-warn-title').textContent = r.shadow_warn_title;
+  document.getElementById('shadow-warn-body').innerHTML = r.shadow_warn_body;
+  document.getElementById('rx-title').textContent = r.rx_title;
+  document.getElementById('rx-body').innerHTML = r.rx_body;
+
+  showScreen('screen-result');
+}
+
+// ── 탭 / 스와이프 ──
+function goTab(idx) {
+  currentTab = idx;
+  document.getElementById('cards-track').style.transform = `translateX(-${idx * 100}%)`;
+  document.querySelectorAll('.rtab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+}
+
+// 터치 스와이프
+let touchStartX = 0;
+document.getElementById('swipe-container').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, {passive:true});
+document.getElementById('swipe-container').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) {
+    if (dx < 0 && currentTab < 2) goTab(currentTab + 1);
+    if (dx > 0 && currentTab > 0) goTab(currentTab - 1);
+  }
+}, {passive:true});
+
+// ── shake 키프레임 ──
+document.head.insertAdjacentHTML('beforeend','<style>@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}</style>');
+
+createStars();
+
+// ── 3단계 타이핑 시퀀스 ──
+function typeSequence() {
+  const el = document.getElementById('main-p');
+  const lines = [
+    { text: '너는 네가 어떤 사람인지\n안다고 생각하지?', delay: 0,    charDelay: 130, hold: 2200 },
+    { text: '과연 그럴까?',                              delay: 0,    charDelay: 180, hold: 1800 },
+    { text: '너를 마주할 준비가 됐어?',                  delay: 0,    charDelay: 240, hold: 99999 },
+  ];
+
+  let seq = Promise.resolve();
+  lines.forEach((line, idx) => {
+    seq = seq.then(() => new Promise(resolve => {
+      // 텍스트 초기화
+      el.innerHTML = '';
+      // 줄바꿈 처리
+      const segments = line.text.split('\n');
+      let charIdx = 0;
+      let allChars = [];
+      segments.forEach((seg, si) => {
+        for (const ch of seg) allChars.push({ch, br: false});
+        if (si < segments.length - 1) allChars.push({ch: '', br: true});
+      });
+
+      // 커서
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor-blink'; cursor.textContent = '_';
+      el.appendChild(cursor);
+
+      const iv = setInterval(() => {
+        if (charIdx < allChars.length) {
+          const item = allChars[charIdx];
+          if (item.br) {
+            cursor.insertAdjacentHTML('beforebegin', '<br>');
+          } else {
+            cursor.insertAdjacentText('beforebegin', item.ch);
+          }
+          charIdx++;
+        } else {
+          clearInterval(iv);
+          // 마지막 줄이면 힌트 보여주고 종료
+          if (idx === lines.length - 1) {
+            setTimeout(() => {
+              document.getElementById('touch-hint').style.opacity = '1';
+            }, 600);
+            return;
+          }
+          // hold 후 페이드아웃
+          setTimeout(() => {
+            el.style.transition = 'opacity 0.5s';
+            el.style.opacity = '0';
+            setTimeout(() => {
+              el.style.opacity = '1';
+              resolve();
+            }, 500);
+          }, line.hold);
+        }
+      }, line.charDelay);
+    }));
+  });
+}
+
+setTimeout(typeSequence, 2800);
+
+// ── 로고 클릭 ──
+function activateInput() {
+  const panel = document.getElementById('input-panel');
+  if (panel.classList.contains('open')) return;
+
+  createBellSound();
+
+  const ripple = document.getElementById('ripple');
+  ripple.classList.remove('active'); void ripple.offsetWidth; ripple.classList.add('active');
+
+  // 플래시 오버레이 등장
+  const flash = document.getElementById('title-flash');
+  const flashText = document.getElementById('title-flash-text');
+  flashText.textContent = '';
+  flash.classList.add('show');
+
+  // 한 글자씩 타이핑 (인트로와 동일한 240ms)
+  const text = '나 사용설명서';
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor-blink'; cursor.textContent = '_';
+  flashText.appendChild(cursor);
+
+  const iv = setInterval(() => {
+    if (i < text.length) {
+      cursor.insertAdjacentText('beforebegin', text[i]);
+      i++;
+    } else {
+      clearInterval(iv);
+      // 타이핑 완료 후 잠깐 유지했다가 사라짐
+      setTimeout(() => {
+        flash.style.opacity = '0';
+        setTimeout(() => {
+          flash.style.display = 'none';
+          panel.classList.add('open');
+          document.getElementById('main-text').classList.add('hidden');
+          document.getElementById('touch-hint').style.opacity = '0';
+          setTimeout(() => document.getElementById('name-input').focus(), 700);
+        }, 500);
+      }, 800);
+    }
+  }, 240);
+}
+</script>
+</body>
+</html>
